@@ -1,0 +1,8 @@
+flask
+gunicorn
+torch
+transformers
+spacy
+requests
+huggingface-hub
+joblib
