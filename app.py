@@ -7,18 +7,19 @@ from flask import Flask, request, jsonify
 import spacy
 import joblib
 from huggingface_hub import hf_hub_download
+import spacy
+from spacy.cli import download
 
-# ----------------------------
-# Flask app
-# ----------------------------
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    download("en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm")
+
 app = Flask(__name__)
 
 model = None
-nlp = None 
 
-# ----------------------------
-# Deadline helpers
-# ----------------------------
 def next_weekday(d, weekday):
     days_ahead = weekday - d.weekday()
     if days_ahead <= 0:
@@ -64,9 +65,6 @@ def decode_deadline(text, reference_time=None):
 
     return None
 
-# ----------------------------
-# Extraction helpers
-# ----------------------------
 def extract_linguistic_features(text):
     doc = nlp(text)
     return {
@@ -124,9 +122,7 @@ def clean_description(text, assignee, deadline_text):
 
     return re.sub(r"\s+", " ", desc).strip(" ,.:;-")
 
-# ----------------------------
-# Main API
-# ----------------------------
+
 @app.route("/process", methods=["POST"])
 def process():
     global model, nlp
@@ -176,9 +172,7 @@ def process():
         traceback.print_exc()
         return jsonify({"error": "Processing failed"}), 500
 
-# ----------------------------
-# Health check
-# ----------------------------
+
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({
@@ -187,8 +181,6 @@ def health():
         "nlp": "spaCy"
     })
 
-# ----------------------------
-# Run
-# ----------------------------
+
 if __name__ == "__main__":
     app.run(debug=True)
