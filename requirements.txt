@@ -6,3 +6,4 @@ spacy
 requests
 huggingface-hub
 joblib
+scikit-learn
