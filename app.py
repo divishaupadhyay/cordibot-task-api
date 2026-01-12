@@ -10,15 +10,27 @@ from huggingface_hub import hf_hub_download
 import spacy
 from spacy.cli import download
 
+app = Flask(__name__)
+
 try:
     nlp = spacy.load("en_core_web_sm")
 except OSError:
     download("en_core_web_sm")
     nlp = spacy.load("en_core_web_sm")
 
-app = Flask(__name__)
+MODEL_REPO = "divishaupadhyay2/cordibot-task-detector"
+MODEL_FILE = "model.joblib"
 
-model = None
+try:
+    model_path = hf_hub_download(
+        repo_id=MODEL_REPO,
+        filename=MODEL_FILE
+    )
+    model = joblib.load(model_path)
+    print("✅ Model loaded")
+except Exception as e:
+    print("❌ Model load failed:", e)
+    model = None
 
 def next_weekday(d, weekday):
     days_ahead = weekday - d.weekday()
@@ -125,17 +137,12 @@ def clean_description(text, assignee, deadline_text):
 
 @app.route("/process", methods=["POST"])
 def process():
-    global model, nlp
-
     if nlp is None:
      nlp = spacy.load("en_core_web_sm")
 
     if model is None:
-     model_path = hf_hub_download(
-        repo_id="divishaupadhyay2/cordibot-task-detector",
-        filename="model.joblib"
-     )
-    model = joblib.load(model_path)
+        return jsonify({"error": "Model not loaded"}), 500
+    
 
     data = request.get_json() or {}
     text = data.get("message", "").strip()
@@ -149,7 +156,7 @@ def process():
 
         if not is_task:
             return jsonify({
-                "is_task": False,
+                "is_task": bool(is_task),
                 "confidence": confidence
             })
 
