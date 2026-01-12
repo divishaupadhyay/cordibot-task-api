@@ -137,8 +137,6 @@ def clean_description(text, assignee, deadline_text):
 
 @app.route("/process", methods=["POST"])
 def process():
-    if nlp is None:
-     nlp = spacy.load("en_core_web_sm")
 
     if model is None:
         return jsonify({"error": "Model not loaded"}), 500
