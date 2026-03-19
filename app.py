@@ -151,6 +151,13 @@ def process():
     try:
         confidence = float(model.predict_proba([text])[0][1])
         is_task = confidence >= 0.35
+        confidence = float(model.predict_proba([text])[0][1])
+        raw_prediction = confidence >= 0.35
+
+        if confidence < 0.35:
+         is_task = not raw_prediction
+        else:
+         is_task = raw_prediction
 
         if not is_task:
             return jsonify({
@@ -161,7 +168,7 @@ def process():
         feats = extract_linguistic_features(text)
         assignee = extract_assignee(text, feats)
         deadline_text, deadline_iso = extract_deadline(text, feats)
-        description = clean_description(text, assignee, deadline_text)
+        description = text
 
         return jsonify({
             "is_task": True,
@@ -177,6 +184,29 @@ def process():
         traceback.print_exc()
         return jsonify({"error": "Processing failed"}), 500
 
+@app.route("/detect-urgency", methods=["POST"])
+def detect_urgency():
+    data = request.get_json() or {}
+    text = data.get("message", "").strip()
+    
+    if not text:
+        return jsonify({"error": "No message provided"}), 400
+
+    urgency_keywords = [
+        "update", "status", "progress", "where are we",
+        "how is it going", "any updates", "done yet",
+        "finished", "completed", "eta", "when will",
+        "still working", "asap", "urgent", "follow up"
+    ]
+    
+    text_lower = text.lower()
+    matched = [kw for kw in urgency_keywords in text_lower]
+    is_urgency = len(matched) > 0
+
+    return jsonify({
+        "is_urgency_request": is_urgency,
+        "matched_keywords": matched
+    })
 
 @app.route("/health", methods=["GET"])
 def health():
