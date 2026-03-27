@@ -154,7 +154,7 @@ def process():
         confidence = float(model.predict_proba([text])[0][1])
         raw_prediction = confidence >= 0.35
 
-        if confidence < 0.35:
+        if confidence < 0.45:
          is_task = not raw_prediction
         else:
          is_task = raw_prediction
