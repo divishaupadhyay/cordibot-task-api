@@ -188,24 +188,61 @@ def process():
 def detect_urgency():
     data = request.get_json() or {}
     text = data.get("message", "").strip()
-    
+ 
     if not text:
         return jsonify({"error": "No message provided"}), 400
-
-    urgency_keywords = [
-        "update", "status", "progress", "where are we",
-        "how is it going", "any updates", "done yet",
-        "finished", "completed", "eta", "when will",
-        "still working", "asap", "urgent", "follow up"
-    ]
-    
+ 
     text_lower = text.lower()
-    matched = [kw for kw in urgency_keywords if kw in text_lower]
+ 
+    # Grouped keyword sets for better context
+    status_phrases = [
+        "any update", "any updates", "what's the update", "whats the update",
+        "give me an update", "send update", "need an update",
+        "status update", "current status", "what is the status",
+        "whats the status", "any status"
+    ]
+ 
+    progress_phrases = [
+        "how is it going", "how's it going", "where are we",
+        "how far", "progress on", "any progress",
+        "still working on", "still on it", "working on it"
+    ]
+ 
+    completion_phrases = [
+        "is it done", "is it ready", "done yet", "finished yet",
+        "completed yet", "has it been done", "been completed",
+        "when will it be done", "when will it be ready", "eta on",
+        "how long", "when can i expect"
+    ]
+ 
+    urgency_phrases = [
+        "asap", "urgent", "urgently", "immediately",
+        "right away", "as soon as possible", "follow up",
+        "following up", "checking in", "just checking",
+        "reminder", "ping", "nudge"
+    ]
+ 
+    all_phrases = status_phrases + progress_phrases + completion_phrases + urgency_phrases
+ 
+    matched = [phrase for phrase in all_phrases if phrase in text_lower]
     is_urgency = len(matched) > 0
-
+ 
+    # Determine urgency category for richer response
+    category = None
+    if any(p in text_lower for p in status_phrases):
+        category = "status_request"
+    elif any(p in text_lower for p in progress_phrases):
+        category = "progress_check"
+    elif any(p in text_lower for p in completion_phrases):
+        category = "completion_check"
+    elif any(p in text_lower for p in urgency_phrases):
+        category = "urgency_flag"
+ 
     return jsonify({
         "is_urgency_request": is_urgency,
-        "matched_keywords": matched
+        "category": category,
+        "matched_keywords": matched,
+        "original_message": text
     })
 
 @app.route("/health", methods=["GET"])
