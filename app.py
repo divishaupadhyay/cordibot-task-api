@@ -200,7 +200,7 @@ def detect_urgency():
     ]
     
     text_lower = text.lower()
-    matched = [kw for kw in urgency_keywords in text_lower]
+    matched = [kw for kw in urgency_keywords if kw in text_lower]
     is_urgency = len(matched) > 0
 
     return jsonify({
