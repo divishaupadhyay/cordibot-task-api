@@ -47,7 +47,7 @@ def decode_deadline(text, reference_time=None):
 
     text = text.lower().strip()
 
-    if text in ["eod", "end of day"]:
+    if text in ["eod", "end of day" ,"today"]:
         return reference_time.replace(hour=17, minute=0, second=0)
 
     if text == "cob":
@@ -150,14 +150,8 @@ def process():
 
     try:
         confidence = float(model.predict_proba([text])[0][1])
-        is_task = confidence >= 0.35
+        is_task = confidence >= 0.40
         confidence = float(model.predict_proba([text])[0][1])
-        raw_prediction = confidence >= 0.35
-
-        if confidence < 0.45:
-         is_task = not raw_prediction
-        else:
-         is_task = raw_prediction
 
         if not is_task:
             return jsonify({
@@ -199,7 +193,7 @@ def detect_urgency():
         "any update", "any updates", "what's the update", "whats the update",
         "give me an update", "send update", "need an update",
         "status update", "current status", "what is the status",
-        "whats the status", "any status"
+        "whats the status", "any status" , 'status' , 'update'
     ]
  
     progress_phrases = [
@@ -225,6 +219,7 @@ def detect_urgency():
     all_phrases = status_phrases + progress_phrases + completion_phrases + urgency_phrases
  
     matched = [phrase for phrase in all_phrases if phrase in text_lower]
+    print("Matched urgency phrases:", matched)    
     is_urgency = len(matched) > 0
  
     # Determine urgency category for richer response
@@ -255,4 +250,4 @@ def health():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5000, use_reloader=False)
